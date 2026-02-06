@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Forever Yours - A Modern Love Story</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Instrument+Serif:ital@0;1&display=swap"
+    rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#fff1f2',
+              100: '#ffe4e6',
+              200: '#fecdd3',
+              300: '#fda4af',
+              400: '#fb7185',
+              500: '#f43f5e', // Vibrant Love Red
+              600: '#e11d48',
+              700: '#be123c',
+              800: '#9f1239',
+              900: '#881337',
+            },
+            gold: {
+              50: '#fffcf2',
+              100: '#fff9e6',
+              200: '#ffefbf',
+              300: '#ffe080',
+              400: '#ffcf4d',
+              500: '#ffb300', // Rich Gold
+              600: '#e69500',
+              700: '#b36b00',
+              800: '#8c520a',
+              900: '#734310',
+            },
+            accent: '#FF4757',
+            surface: '#F8F8F8',
+          },
+          fontFamily: {
+            sans: ["Inter", "sans-serif"],
+            display: ["Playfair Display", "serif"],
+            serif: ["Instrument Serif", "serif"],
+          },
+          borderRadius: {
+            '4xl': '2rem',
+            '5xl': '3rem',
+          },
+        },
+      },
+    }
+  </script>
+  <style>
+    .glass-pill {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .dark .glass-pill {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .card-glow {
+      box-shadow: 0 0 80px -20px rgba(244, 63, 94, 0.3);
+    }
+
+    .mesh-gradient {
+      background-color: #F8F8F8;
+      background-image:
+        radial-gradient(at 0% 0%, hsla(353, 90%, 95%, 1) 0, transparent 50%),
+        radial-gradient(at 50% 0%, hsla(353, 90%, 98%, 1) 0, transparent 50%),
+        radial-gradient(at 100% 0%, hsla(353, 90%, 95%, 1) 0, transparent 50%);
+    }
+
+    .dark .mesh-gradient {
+      background-color: #0A0A0A;
+      background-image:
+        radial-gradient(at 0% 0%, hsla(353, 50%, 15%, 1) 0, transparent 50%),
+        radial-gradient(at 50% 0%, hsla(353, 50%, 10%, 1) 0, transparent 50%),
+        radial-gradient(at 100% 0%, hsla(353, 50%, 15%, 1) 0, transparent 50%);
+    }
+
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    @keyframes slow-zoom {
+      0% {
+        transform: scale(1);
+      }
+
+      100% {
+        transform: scale(1.1);
+      }
+    }
+
+    .animate-slow-zoom {
+      animation: slow-zoom 20s ease-in-out infinite alternate;
+    }
+
+    .clip-path-v {
+      clip-path: polygon(0 0, 50% 100%, 100% 0);
+    }
+
+    .text-glow {
+      text-shadow: 0 0 30px rgba(255, 255, 255, 0.3);
+    }
+  </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.2.4",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+    "react/": "https://esm.sh/react@^19.2.4/",
+    "@google/genai": "https://esm.sh/@google/genai@^1.39.0",
+    "react-router-dom": "https://esm.sh/react-router-dom@^7.13.0",
+    "framer-motion": "https://esm.sh/framer-motion@^12.29.3",
+    "lucide-react": "https://esm.sh/lucide-react@^0.563.0",
+    "canvas-confetti": "https://esm.sh/canvas-confetti@^1.9.4"
+  }
+}
+</script>
+  <link rel="stylesheet" href="/index.css">
+</head>
+
+<body
+  class="antialiased bg-[#F2F2F2] dark:bg-[#0A0A0A] text-stone-900 dark:text-stone-100 transition-colors duration-500">
+  <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+
+</html>
