@@ -85,8 +85,8 @@ export const HeroSection = () => {
     const navigate = useNavigate();
     return (
         <PageWrapper>
-            <div className="p-4 sm:p-6 lg:p-8">
-                <header className="relative w-full h-[90vh] min-h-[700px] overflow-hidden rounded-[2.5rem] bg-stone-900 shadow-5xl group">
+            <div className="p-2 sm:p-4 md:p-6 lg:p-8">
+                <header className="relative w-full h-[90vh] min-h-[500px] sm:min-h-[600px] md:min-h-[700px] overflow-hidden rounded-[1.5rem] sm:rounded-[2rem] md:rounded-[2.5rem] bg-stone-900 shadow-5xl group">
                     {/* Background Image with Slow Zoom */}
                     <motion.img
                         src={IMAGES.roses}
@@ -107,28 +107,28 @@ export const HeroSection = () => {
                     <AnimatedParticles />
 
                     {/* Hero Content */}
-                    <div className="absolute inset-0 flex flex-col justify-end p-8 sm:p-16 lg:p-24 relative z-10">
-                        <div className="max-w-3xl space-y-6">
+                    <div className="absolute inset-0 flex flex-col justify-center p-4 pt-24 sm:p-8 md:p-12 lg:p-20 xl:p-24 z-10">
+                        <div className="max-w-3xl space-y-3 sm:space-y-4 md:space-y-6">
                             <motion.div
                                 initial={{ opacity: 0, x: -20 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: 0.2 }}
-                                className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/20 backdrop-blur-md border border-white/20 rounded-full"
+                                className="inline-flex items-center gap-2 px-3 py-1 sm:px-4 sm:py-1.5 bg-white/20 backdrop-blur-md border border-white/20 rounded-full"
                             >
                                 <motion.div
                                     animate={{ rotate: [0, 360] }}
                                     transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
                                 >
-                                    <Sparkles className="size-4 text-gold-300" />
+                                    <Sparkles className="size-3 sm:size-4 text-gold-300" />
                                 </motion.div>
-                                <span className="text-xs font-bold uppercase tracking-widest text-gold-300">The Love Engine</span>
+                                <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-gold-300">The Love Engine</span>
                             </motion.div>
 
                             <motion.h1
                                 initial={{ opacity: 0, y: 30 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.4 }}
-                                className="text-6xl sm:text-8xl lg:text-9xl font-medium text-white tracking-tighter leading-[0.85] font-display"
+                                className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-medium text-white tracking-tighter leading-[0.85] font-display"
                             >
                                 Infinite Love <br />
                                 <motion.span
@@ -154,7 +154,7 @@ export const HeroSection = () => {
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 transition={{ delay: 0.6 }}
-                                className="text-xl sm:text-2xl font-light text-white/70 max-w-xl leading-relaxed antialiased"
+                                className="text-base sm:text-lg md:text-xl lg:text-2xl font-light text-white/70 max-w-xl leading-relaxed antialiased"
                             >
                                 The future of romance is here. Create, customize, and secure your love stories on the most premium habitat for lovers.
                             </motion.p>
@@ -163,7 +163,7 @@ export const HeroSection = () => {
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.8 }}
-                                className="flex flex-wrap gap-4 items-center pt-2"
+                                className="flex flex-wrap gap-3 sm:gap-4 items-center pt-1 sm:pt-2"
                             >
                                 <CountdownTimer />
                             </motion.div>
@@ -172,21 +172,21 @@ export const HeroSection = () => {
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 1.0 }}
-                                className="pt-4"
+                                className="pt-2 sm:pt-3 md:pt-4"
                             >
                                 <motion.button
                                     onClick={() => navigate('/create')}
                                     whileHover={{ scale: 1.05 }}
                                     whileTap={{ scale: 0.95 }}
-                                    className="group inline-flex items-center gap-5 bg-white text-stone-900 pl-8 pr-3 py-3 rounded-full hover:shadow-2xl hover:shadow-brand-500/30 transition-all duration-500"
+                                    className="group inline-flex items-center gap-3 sm:gap-4 md:gap-5 bg-white text-stone-900 pl-5 sm:pl-6 md:pl-8 pr-2 sm:pr-2.5 md:pr-3 py-2 sm:py-2.5 md:py-3 rounded-full hover:shadow-2xl hover:shadow-brand-500/30 transition-all duration-500"
                                 >
-                                    <span className="text-lg font-semibold">Create Your Card</span>
+                                    <span className="text-sm sm:text-base md:text-lg font-semibold">Create Your Card</span>
                                     <motion.span
-                                        className="size-12 bg-brand-500 rounded-full flex items-center justify-center group-hover:bg-brand-600 transition-colors shadow-lg"
+                                        className="size-10 sm:size-11 md:size-12 bg-brand-500 rounded-full flex items-center justify-center group-hover:bg-brand-600 transition-colors shadow-lg"
                                         animate={{ rotate: [0, 10, -10, 0] }}
                                         transition={{ duration: 2, repeat: Infinity }}
                                     >
-                                        <ArrowRight className="size-6 text-white" />
+                                        <ArrowRight className="size-5 sm:size-5.5 md:size-6 text-white" />
                                     </motion.span>
                                 </motion.button>
                             </motion.div>
@@ -412,7 +412,7 @@ export const GallerySection = () => {
                         </h2>
                         <p className="text-xl font-light text-stone-500 dark:text-stone-400 antialiased">Experience the magic through real examples. Every interaction designed to delight.</p>
                     </motion.div>
-                    <div className="flex gap-4 p-4">
+                    <div className="flex md:hidden gap-4 p-4">
                         <motion.button
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
@@ -441,7 +441,7 @@ export const GallerySection = () => {
                             viewport={{ once: true }}
                             transition={{ delay: i * 0.1 }}
                             whileHover={{ y: -10, scale: 1.02 }}
-                            className={`group relative h-[650px] rounded-[4rem] overflow-hidden shadow-2xl transition-all duration-700 cursor-pointer ${active === i ? 'ring-8 ring-brand-500/30 scale-105' : ''}`}
+                            className={`group relative h-[500px] sm:h-[650px] rounded-[2.5rem] sm:rounded-[4rem] overflow-hidden shadow-2xl transition-all duration-700 cursor-pointer ${active === i ? 'block ring-4 sm:ring-8 ring-brand-500/30 scale-100 sm:scale-105' : 'hidden md:block scale-95 opacity-50'}`}
                             onClick={() => setActive(i)}
                         >
                             <img src={item.img} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 grayscale-[40%] group-hover:grayscale-0" alt={item.title} />

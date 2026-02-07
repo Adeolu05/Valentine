@@ -21,8 +21,9 @@ const ProposalView = () => {
     const dataParam = queryParams.get('data');
     const idParam = queryParams.get('id');
 
-    const [customizedData, setCustomizedData] = useState<{ name: string; image: string; question: string; images?: string[] }>({
+    const [customizedData, setCustomizedData] = useState<{ name: string; sender: string; image: string; question: string; images?: string[] }>({
         name: "Valentine",
+        sender: "Admirer",
         image: IMAGES.roses,
         question: "Will you be my Valentine?"
     });
@@ -50,6 +51,7 @@ const ProposalView = () => {
                     const hasImages = data.images && data.images.length > 1;
                     setCustomizedData({
                         name: data.name,
+                        sender: data.sender_name || "Admirer",
                         question: data.question,
                         image: data.images && data.images.length > 0 ? data.images[data.images.length - 1] : IMAGES.roses,
                         images: data.images
@@ -59,7 +61,7 @@ const ProposalView = () => {
             } else if (dataParam) {
                 try {
                     const decoded = JSON.parse(atob(dataParam));
-                    setCustomizedData({ ...customizedData, ...decoded });
+                    setCustomizedData({ ...customizedData, ...decoded, sender: decoded.sender || "Admirer" });
                     if (decoded.images && decoded.images.length > 1) setShowSlideshow(true);
                 } catch (e) {
                     console.error("Failed to decode data", e);
@@ -86,7 +88,8 @@ const ProposalView = () => {
         if (showSlideshow && customizedData.images && customizedData.images.length > 1) {
             const timer = setInterval(() => {
                 setCurrentSlide(prev => {
-                    if (prev + 1 >= customizedData.images!.length) { // !. safe because length > 1
+                    // Exclude the last image (main photo) from the slideshow
+                    if (prev + 1 >= customizedData.images!.length - 1) {
                         fadeOutAudio();
                         setShowSlideshow(false); // End slideshow
                         return prev;

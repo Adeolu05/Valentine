@@ -7,6 +7,7 @@ import { IMAGES } from '../../constants';
 
 const CreateCardView = () => {
     const [name, setName] = useState('');
+    const [senderName, setSenderName] = useState('');
     const [question, setQuestion] = useState('');
 
     // Split state for better UX
@@ -22,6 +23,7 @@ const CreateCardView = () => {
 
     // Default values for preview
     const previewName = name || "Valentine";
+    const previewSenderName = senderName || "Admirer";
     const previewImage = mainImage || memoryImages.find(img => img) || IMAGES.roses;
     const previewQuestion = question || "Will you be my Valentine?";
 
@@ -96,6 +98,7 @@ const CreateCardView = () => {
                 .from('proposals')
                 .insert({
                     name: previewName,
+                    sender_name: previewSenderName,
                     question: previewQuestion,
                     images: finalImages
                 })
@@ -113,6 +116,7 @@ const CreateCardView = () => {
             // Fallback
             const data = {
                 name: previewName,
+                sender: previewSenderName,
                 images: finalImages,
                 question: previewQuestion
             };
@@ -157,6 +161,17 @@ const CreateCardView = () => {
                                         value={name}
                                         onChange={(e) => setName(e.target.value)}
                                         placeholder="e.g. Juliet"
+                                        className="w-full px-8 py-6 bg-stone-50 dark:bg-black/30 border border-stone-200 dark:border-white/10 rounded-[2rem] outline-none focus:ring-4 ring-brand-500/10 transition-all dark:text-white text-lg placeholder:text-stone-300 font-medium"
+                                    />
+                                </div>
+
+                                <div className="space-y-3">
+                                    <label className="text-[10px] font-black uppercase tracking-[0.3em] text-stone-400 ml-6">Your Name</label>
+                                    <input
+                                        type="text"
+                                        value={senderName}
+                                        onChange={(e) => setSenderName(e.target.value)}
+                                        placeholder="e.g. Romeo"
                                         className="w-full px-8 py-6 bg-stone-50 dark:bg-black/30 border border-stone-200 dark:border-white/10 rounded-[2rem] outline-none focus:ring-4 ring-brand-500/10 transition-all dark:text-white text-lg placeholder:text-stone-300 font-medium"
                                     />
                                 </div>

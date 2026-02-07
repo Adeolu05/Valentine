@@ -11,8 +11,8 @@ export const generateLoveLetter = async (keywords: string[]) => {
       model: 'gemini-3-flash-preview',
       contents: `Write a short, incredibly romantic, and poetic love letter including these concepts: ${keywords.join(', ')}. 
       The tone should be timeless, elegant, and deeply affectionate. 
-      Keep it under 120 words. 
-      Format with a beautiful salutation and closing.`,
+      Keep it under 100 words. 
+      IMPORTANT: Do NOT include any salutation (like "My Dearest") or any closing (like "Forever Yours"). Return ONLY the body of the letter.`,
       config: {
         temperature: 0.8,
         topP: 0.95,

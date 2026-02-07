@@ -42,7 +42,7 @@ const FloatingParticles = () => {
 const SuccessView = () => {
     const [letter, setLetter] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
-    const [customizedData, setCustomizedData] = useState({ name: "Valentine", image: IMAGES.roses });
+    const [customizedData, setCustomizedData] = useState({ name: "Valentine", sender: "Admirer", image: IMAGES.roses });
     const location = useLocation();
 
     // Parse customization
@@ -63,6 +63,7 @@ const SuccessView = () => {
                 if (data && !error) {
                     setCustomizedData({
                         name: data.name,
+                        sender: data.sender_name || "Admirer",
                         image: data.images && data.images.length > 0 ? data.images[data.images.length - 1] : IMAGES.roses
                     });
                 }
@@ -72,6 +73,7 @@ const SuccessView = () => {
                     const decoded = JSON.parse(atob(dataParam));
                     setCustomizedData({
                         name: decoded.name || "Valentine",
+                        sender: decoded.sender || "Admirer",
                         image: decoded.image || IMAGES.roses
                     });
                 } catch (e) {
@@ -91,15 +93,10 @@ const SuccessView = () => {
 
         try {
             const text = await generateLoveLetter([customizedData.name, randomTheme, 'Love']);
-            // Remove common greetings since we add our own personalized one
-            const cleanedText = (text || "Every beat of my heart is a testament to the love we share. From the quiet mornings to the starlit nights, you are my sanctuary and my greatest adventure. I promise to hold your hand through every season, for now and for all the eternities to come.\n\nForever yours.")
-                .replace(/^My dearest,?\s*/i, '')
-                .replace(/^Dear .*?,?\s*/i, '')
-                .trim();
-            setLetter(cleanedText);
+            setLetter(text.trim());
         } catch (error) {
             console.error("Failed to generate vow:", error);
-            setLetter("Every beat of my heart is a testament to the love we share. From the quiet mornings to the starlit nights, you are my sanctuary and my greatest adventure. I promise to hold your hand through every season, for now and for all the eternities to come.\n\nForever yours.");
+            setLetter("Every beat of my heart is a testament to the love we share. From the quiet mornings to the starlit nights, you are my sanctuary and my greatest adventure. I promise to hold your hand through every season, for now and for all the eternities to come.");
         }
         setLoading(false);
     };
@@ -254,6 +251,10 @@ const SuccessView = () => {
                                         <p className="text-xl sm:text-2xl font-serif italic text-stone-800 dark:text-stone-200 leading-relaxed relative z-10 antialiased">
                                             <span className="block mb-4">My dearest, <span className="text-brand-500 font-bold">{customizedData.name}</span></span>
                                             <span className="whitespace-pre-wrap">{letter}</span>
+                                            <span className="block mt-8 text-right">
+                                                Yours eternally, <br />
+                                                <span className="text-brand-500 font-bold not-italic">{customizedData.sender}</span>
+                                            </span>
                                         </p>
                                     </motion.div>
                                 )}
@@ -265,7 +266,15 @@ const SuccessView = () => {
                                 <p className="text-xs font-black text-stone-400 uppercase tracking-widest">Date Issued</p>
                                 <p className="text-xl font-medium dark:text-white">{new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
                             </div>
-                            <div className="flex gap-4">
+
+                            {/* Signature Display */}
+                            <div className="space-y-1 text-right">
+                                <p className="text-xs font-black text-stone-400 uppercase tracking-widest">Signed By</p>
+                                <p className="text-xl font-medium dark:text-white">{customizedData.sender}</p>
+                            </div>
+
+                            {/* Actions - Inside but ignored by html2canvas */}
+                            <div className="flex gap-4" data-html2canvas-ignore="true">
                                 <motion.button
                                     whileHover={{ scale: 1.05 }}
                                     whileTap={{ scale: 0.95 }}
