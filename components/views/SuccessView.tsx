@@ -83,18 +83,52 @@ const SuccessView = () => {
     }, [idParam, dataParam]);
 
     const fetchLetter = async () => {
+        setLetter(null); // Clear letter to show loading state
         setLoading(true);
-        const text = await generateLoveLetter([customizedData.name, 'Destiny', 'Laughter', 'Sanctuary', 'Forever']);
-        // Remove common greetings since we add our own personalized one
-        const cleanedText = (text || "Every beat of my heart is a testament to the love we share. From the quiet mornings to the starlit nights, you are my sanctuary and my greatest adventure. I promise to hold your hand through every season, for now and for all the eternities to come.\n\nForever yours.")
-            .replace(/^My dearest,?\s*/i, '')
-            .replace(/^Dear .*?,?\s*/i, '')
-            .trim();
-        setLetter(cleanedText);
+        // Add random element to keywords to ensure freshness
+        const themes = ['Destiny', 'Laughter', 'Sanctuary', 'Forever', 'Adventure', 'Soulmate', 'Magic', 'Starlight'];
+        const randomTheme = themes[Math.floor(Math.random() * themes.length)];
+
+        try {
+            const text = await generateLoveLetter([customizedData.name, randomTheme, 'Love']);
+            // Remove common greetings since we add our own personalized one
+            const cleanedText = (text || "Every beat of my heart is a testament to the love we share. From the quiet mornings to the starlit nights, you are my sanctuary and my greatest adventure. I promise to hold your hand through every season, for now and for all the eternities to come.\n\nForever yours.")
+                .replace(/^My dearest,?\s*/i, '')
+                .replace(/^Dear .*?,?\s*/i, '')
+                .trim();
+            setLetter(cleanedText);
+        } catch (error) {
+            console.error("Failed to generate vow:", error);
+            setLetter("Every beat of my heart is a testament to the love we share. From the quiet mornings to the starlit nights, you are my sanctuary and my greatest adventure. I promise to hold your hand through every season, for now and for all the eternities to come.\n\nForever yours.");
+        }
         setLoading(false);
     };
 
     useEffect(() => { fetchLetter(); }, []);
+
+    const handleSave = async () => {
+        const element = document.getElementById('certificate');
+        if (element) {
+            try {
+                // Dynamically import html2canvas to avoid SSR issues if any (though this is SPA)
+                const html2canvas = (await import('html2canvas')).default;
+                const canvas = await html2canvas(element, {
+                    scale: 2, // Higher quality
+                    backgroundColor: null,
+                    logging: false,
+                    useCORS: true
+                });
+
+                const link = document.createElement('a');
+                link.download = `Promise-to-${customizedData.name}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            } catch (error) {
+                console.error("Failed to save certificate:", error);
+                alert("Could not save the certificate. Please try taking a screenshot!");
+            }
+        }
+    };
 
     return (
         <PageWrapper>
@@ -119,6 +153,7 @@ const SuccessView = () => {
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.6 }}
                     className="w-full max-w-5xl bg-white dark:bg-stone-900 rounded-[4rem] p-1 sm:p-2 shadow-6xl relative border-8 border-brand-50 dark:border-white/5 overflow-hidden"
+                    id="certificate"
                 >
                     <div className="absolute inset-0 bg-gradient-to-br from-brand-500/5 via-transparent to-gold-500/5 -z-10" />
 
@@ -234,6 +269,7 @@ const SuccessView = () => {
                                 <motion.button
                                     whileHover={{ scale: 1.05 }}
                                     whileTap={{ scale: 0.95 }}
+                                    onClick={handleSave}
                                     className="flex items-center gap-3 bg-gradient-to-r from-brand-500 to-pink-500 text-white px-10 py-5 rounded-full font-bold transition-all shadow-xl shadow-brand-500/30"
                                 >
                                     Save Record <Download className="size-4" />
