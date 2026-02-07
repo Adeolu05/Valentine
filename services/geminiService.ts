@@ -3,9 +3,10 @@ import { GoogleGenAI } from "@google/genai";
 
 export const generateLoveLetter = async (keywords: string[]) => {
   try {
-    // Correctly initialize with a named parameter and direct process.env.API_KEY
+    // Correctly initialize with a named parameter
     // Always create a new instance right before making an API call to ensure the latest API key is used
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY || import.meta.env.API_KEY || process.env.API_KEY;
+    const ai = new GoogleGenAI({ apiKey });
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: `Write a short, incredibly romantic, and poetic love letter including these concepts: ${keywords.join(', ')}. 
@@ -18,7 +19,7 @@ export const generateLoveLetter = async (keywords: string[]) => {
         topK: 64,
       }
     });
-    
+
     // Accessing .text property directly as it is a getter (not a method) in the SDK
     return response.text;
   } catch (error) {
