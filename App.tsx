@@ -28,10 +28,15 @@ const AnimatedRoutes = () => {
   );
 };
 
+import { Analytics } from "@vercel/analytics/react";
+
 const App = () => (
-  <Router>
-    <AnimatedRoutes />
-  </Router>
+  <>
+    <Router>
+      <AnimatedRoutes />
+    </Router>
+    <Analytics />
+  </>
 );
 
 export default App;
