@@ -6,6 +6,8 @@ import { supabase } from '../../utils/supabase';
 import { IMAGES, MOODS } from '../../constants';
 import { Mood } from '../../types';
 import { useMeta } from '../../hooks/useMeta';
+import { compressImage } from '../../utils/imageProcessor';
+import { uploadWithProgress } from '../../utils/uploadHelper';
 
 const CreateCardView = () => {
     useMeta({
@@ -28,7 +30,9 @@ const CreateCardView = () => {
 
     // Uploading states
     const [uploadingMain, setUploadingMain] = useState(false);
+    const [uploadProgressMain, setUploadProgressMain] = useState(0);
     const [uploadingMemory, setUploadingMemory] = useState<boolean[]>([false, false, false]);
+    const [uploadProgressMemory, setUploadProgressMemory] = useState<number[]>([0, 0, 0]);
 
     // Default values for preview
     const previewName = name || "Valentine";
@@ -41,21 +45,38 @@ const CreateCardView = () => {
             // Set loading state
             if (type === 'main') {
                 setUploadingMain(true);
+                setUploadProgressMain(0);
             } else {
                 const newUploading = [...uploadingMemory];
                 newUploading[index] = true;
                 setUploadingMemory(newUploading);
+                const newProgress = [...uploadProgressMemory];
+                newProgress[index] = 0;
+                setUploadProgressMemory(newProgress);
             }
+
+            // 1. Optimize Image
+            const compressedBlob = await compressImage(file);
 
             const fileExt = file.name.split('.').pop();
             const fileName = `${Math.random()}.${fileExt}`;
             const filePath = `${fileName}`;
 
-            const { error: uploadError } = await supabase.storage
-                .from('uploads')
-                .upload(filePath, file);
-
-            if (uploadError) throw uploadError;
+            // 2. Upload with Progress
+            await uploadWithProgress(
+                'uploads',
+                filePath,
+                compressedBlob,
+                (progress) => {
+                    if (type === 'main') {
+                        setUploadProgressMain(progress);
+                    } else {
+                        const newProgress = [...uploadProgressMemory];
+                        newProgress[index] = progress;
+                        setUploadProgressMemory(newProgress);
+                    }
+                }
+            );
 
             const { data } = supabase.storage.from('uploads').getPublicUrl(filePath);
 
@@ -73,10 +94,16 @@ const CreateCardView = () => {
         } finally {
             if (type === 'main') {
                 setUploadingMain(false);
+                setTimeout(() => setUploadProgressMain(0), 1000); // Reset after delay
             } else {
                 const newUploading = [...uploadingMemory];
                 newUploading[index] = false;
                 setUploadingMemory(newUploading);
+                setTimeout(() => {
+                    const resetProgress = [...uploadProgressMemory];
+                    resetProgress[index] = 0;
+                    setUploadProgressMemory(resetProgress);
+                }, 1000);
             }
         }
     };
@@ -216,6 +243,15 @@ const CreateCardView = () => {
                                             )}
                                         </label>
                                     </div>
+                                    {uploadingMain && (
+                                        <div className="mx-6 h-1 bg-stone-100 dark:bg-white/5 rounded-full overflow-hidden">
+                                            <motion.div
+                                                className="h-full bg-brand-500"
+                                                initial={{ width: 0 }}
+                                                animate={{ width: `${uploadProgressMain}%` }}
+                                            />
+                                        </div>
+                                    )}
                                     <p className="text-[10px] text-stone-400 ml-6 text-opacity-70">This is the photo they will see on the card.</p>
                                 </div>
 
@@ -282,33 +318,46 @@ const CreateCardView = () => {
 
                                 <div className="space-y-3">
                                     {memoryImages.map((img, idx) => (
-                                        <div key={idx} className="flex gap-2">
-                                            <input
-                                                type="text"
-                                                value={img}
-                                                onChange={(e) => {
-                                                    const newImages = [...memoryImages];
-                                                    newImages[idx] = e.target.value;
-                                                    setMemoryImages(newImages);
-                                                }}
-                                                placeholder={`Memory Photo ${idx + 1}...`}
-                                                className="flex-1 px-6 py-3 bg-white dark:bg-black/30 border border-stone-200 dark:border-white/10 rounded-[1.5rem] outline-none focus:ring-2 ring-brand-500/10 transition-all dark:text-white text-sm placeholder:text-stone-300"
-                                            />
-                                            <label className="flex items-center justify-center px-4 bg-white dark:bg-white/5 border border-stone-200 dark:border-white/10 rounded-[1.5rem] cursor-pointer hover:bg-stone-200 dark:hover:bg-white/10 transition-colors">
+                                        <React.Fragment key={idx}>
+                                            <div className="flex gap-2">
                                                 <input
-                                                    type="file"
-                                                    accept="image/*"
-                                                    className="hidden"
-                                                    onChange={(e) => e.target.files && handleFileUpload(e.target.files[0], 'memory', idx)}
-                                                    disabled={uploadingMemory[idx]}
+                                                    type="text"
+                                                    value={img}
+                                                    onChange={(e) => {
+                                                        const newImages = [...memoryImages];
+                                                        newImages[idx] = e.target.value;
+                                                        setMemoryImages(newImages);
+                                                    }}
+                                                    placeholder={`Memory Photo ${idx + 1}...`}
+                                                    className="flex-1 px-6 py-3 bg-white dark:bg-black/30 border border-stone-200 dark:border-white/10 rounded-[1.5rem] outline-none focus:ring-2 ring-brand-500/10 transition-all dark:text-white text-sm placeholder:text-stone-300"
                                                 />
-                                                {uploadingMemory[idx] ? (
-                                                    <div className="size-4 border-2 border-stone-400 border-t-transparent rounded-full animate-spin" />
-                                                ) : (
-                                                    <Upload className="size-4 text-stone-500 dark:text-stone-400" />
-                                                )}
-                                            </label>
-                                        </div>
+                                                <label className="flex items-center justify-center px-4 bg-white dark:bg-white/5 border border-stone-200 dark:border-white/10 rounded-[1.5rem] cursor-pointer hover:bg-stone-200 dark:hover:bg-white/10 transition-colors">
+                                                    <input
+                                                        type="file"
+                                                        accept="image/*"
+                                                        className="hidden"
+                                                        onChange={(e) => e.target.files && handleFileUpload(e.target.files[0], 'memory', idx)}
+                                                        disabled={uploadingMemory[idx]}
+                                                    />
+                                                    {uploadingMemory[idx] ? (
+                                                        <div className="size-4 border-2 border-stone-400 border-t-transparent rounded-full animate-spin" />
+                                                    ) : (
+                                                        <Upload className="size-4 text-stone-500 dark:text-stone-400" />
+                                                    )}
+                                                </label>
+                                            </div>
+                                            {
+                                                uploadingMemory[idx] && (
+                                                    <div className="h-1 bg-stone-100 dark:bg-white/5 rounded-full overflow-hidden">
+                                                        <motion.div
+                                                            className="h-full bg-brand-500"
+                                                            initial={{ width: 0 }}
+                                                            animate={{ width: `${uploadProgressMemory[idx]}%` }}
+                                                        />
+                                                    </div>
+                                                )
+                                            }
+                                        </React.Fragment>
                                     ))}
                                 </div>
                             </div>
@@ -385,7 +434,7 @@ const CreateCardView = () => {
                     </div>
                 </div>
             </div>
-        </PageWrapper>
+        </PageWrapper >
     );
 };
 
