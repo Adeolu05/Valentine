@@ -180,13 +180,14 @@ const CreateCardView = () => {
         } catch (error) {
             console.error("Error saving proposal:", error);
             // Fallback: Compact Data to keep URL short
+            const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/uploads/`;
             const compact = {
                 n: previewName,
                 s: previewSenderName,
                 q: previewQuestion,
-                i: finalImages,
+                i: finalImages.map(url => url.startsWith(baseUrl) ? url.replace(baseUrl, '') : url),
                 m: mood,
-                u: spotifyUrl
+                u: spotifyUrl.includes('track/') ? spotifyUrl.split('track/')[1].split('?')[0] : spotifyUrl
             };
             const encoded = btoa(JSON.stringify(compact));
             const url = `${window.location.origin}${window.location.pathname}#/p/v?d=${encoded}`;

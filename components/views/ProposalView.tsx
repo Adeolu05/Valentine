@@ -89,17 +89,26 @@ const ProposalView = () => {
             } else if (dataParam) {
                 try {
                     const decoded = JSON.parse(atob(dataParam));
-                    // Support both expanded and compact keys
+                    const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/uploads/`;
+
+                    const processImages = (imgs: string[]) =>
+                        imgs.map(img => img.startsWith('http') ? img : `${baseUrl}${img}`);
+
+                    const rawImages = decoded.i || decoded.images || [];
+                    const finalImages = processImages(Array.isArray(rawImages) ? rawImages : [rawImages]);
+                    const spotifyId = decoded.u || decoded.spotify_url || decoded.spotifyUrl || '';
+                    const finalSpotify = spotifyId && !spotifyId.startsWith('http') ? `https://open.spotify.com/track/${spotifyId}` : spotifyId;
+
                     setCustomizedData({
                         name: decoded.n || decoded.name || "Valentine",
                         sender: decoded.s || decoded.sender || "Admirer",
-                        image: decoded.i ? decoded.i[decoded.i.length - 1] : (decoded.image || IMAGES.roses),
+                        image: finalImages.length > 0 ? finalImages[finalImages.length - 1] : (decoded.image || IMAGES.roses),
                         question: decoded.q || decoded.question || "Will you be my Valentine?",
                         mood: decoded.m || decoded.mood || 'classic',
-                        spotify_url: decoded.u || decoded.spotify_url || decoded.spotifyUrl || '',
-                        images: decoded.i || decoded.images || []
+                        spotify_url: finalSpotify,
+                        images: finalImages
                     });
-                    if ((decoded.i || decoded.images) && (decoded.i || decoded.images).length > 1) setShowSlideshow(true);
+                    if (finalImages.length > 1) setShowSlideshow(true);
                 } catch (e) {
                     console.error("Failed to decode data", e);
                 }

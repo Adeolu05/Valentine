@@ -9,3 +9,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+export const getPublicStorageUrl = (bucket: string, path: string) => {
+    return `${supabaseUrl}/storage/v1/object/public/${bucket}/${path}`;
+};

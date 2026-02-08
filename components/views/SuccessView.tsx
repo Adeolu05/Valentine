@@ -103,12 +103,23 @@ const SuccessView = () => {
                 // Parse from URL parameter
                 try {
                     const decoded = JSON.parse(atob(dataParam));
+                    const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/uploads/`;
+
+                    const processImages = (imgs: string | string[]) => {
+                        const arr = Array.isArray(imgs) ? imgs : [imgs];
+                        return arr.map(img => img.startsWith('http') ? img : `${baseUrl}${img}`);
+                    };
+
+                    const finalImages = processImages(decoded.i || decoded.images || []);
+                    const spotifyId = decoded.u || decoded.spotify_url || decoded.spotifyUrl || '';
+                    const finalSpotify = spotifyId && !spotifyId.startsWith('http') ? `https://open.spotify.com/track/${spotifyId}` : spotifyId;
+
                     setCustomizedData({
                         name: decoded.n || decoded.name || "Valentine",
                         sender: decoded.s || decoded.sender || "Admirer",
-                        image: decoded.i ? decoded.i[decoded.i.length - 1] : (decoded.image || IMAGES.roses),
+                        image: finalImages.length > 0 ? finalImages[finalImages.length - 1] : (decoded.image || IMAGES.roses),
                         mood: decoded.m || decoded.mood || 'classic',
-                        spotify_url: decoded.u || decoded.spotify_url || decoded.spotifyUrl || ''
+                        spotify_url: finalSpotify
                     });
                 } catch (e) {
                     console.error("Failed to decode data", e);
