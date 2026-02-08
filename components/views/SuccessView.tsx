@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Heart, Star, Download, Sparkles, Award } from 'lucide-react';
 import PageWrapper from '../layout/PageWrapper';
@@ -51,6 +51,7 @@ const FloatingParticles = () => {
 const SuccessView = () => {
     const [letter, setLetter] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
+    const { id: idParamFromRoute } = useParams();
     const [customizedData, setCustomizedData] = useState<{ name: string; sender: string; image: string; mood: Mood; spotify_url?: string }>({
         name: "Valentine",
         sender: "Admirer",
@@ -76,8 +77,8 @@ const SuccessView = () => {
 
     // Parse customization
     const queryParams = new URLSearchParams(location.search);
-    const dataParam = queryParams.get('data');
-    const idParam = queryParams.get('id');
+    const dataParam = queryParams.get('data') || queryParams.get('d');
+    const idParam = queryParams.get('id') || idParamFromRoute;
 
     useEffect(() => {
         const fetchData = async () => {
@@ -103,11 +104,11 @@ const SuccessView = () => {
                 try {
                     const decoded = JSON.parse(atob(dataParam));
                     setCustomizedData({
-                        name: decoded.name || "Valentine",
-                        sender: decoded.sender || "Admirer",
-                        image: decoded.image || IMAGES.roses,
-                        mood: decoded.mood || 'classic',
-                        spotify_url: decoded.spotify_url || decoded.spotifyUrl || ''
+                        name: decoded.n || decoded.name || "Valentine",
+                        sender: decoded.s || decoded.sender || "Admirer",
+                        image: decoded.i ? decoded.i[decoded.i.length - 1] : (decoded.image || IMAGES.roses),
+                        mood: decoded.m || decoded.mood || 'classic',
+                        spotify_url: decoded.u || decoded.spotify_url || decoded.spotifyUrl || ''
                     });
                 } catch (e) {
                     console.error("Failed to decode data", e);

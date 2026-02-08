@@ -15,6 +15,14 @@ const CreateCardView = () => {
         description: "Design your perfect Valentine's proposal card with custom moods, music, and AI-generated vows."
     });
 
+    const generateShortId = () => {
+        const chars = 'abcdefghijklmnopqrstuvwxyz01234563789';
+        let result = '';
+        for (let i = 0; i < 6; i++) {
+            result += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return result;
+    };
     const [name, setName] = useState('');
     const [senderName, setSenderName] = useState('');
     const [question, setQuestion] = useState('');
@@ -146,22 +154,22 @@ const CreateCardView = () => {
             if (error) throw error;
 
             if (data) {
-                const url = `${window.location.origin}${window.location.pathname}#/proposal?id=${data.id}`;
+                const url = `${window.location.origin}${window.location.pathname}#/p/${data.id}`;
                 setGeneratedUrl(url);
             }
         } catch (error) {
             console.error("Error saving proposal:", error);
-            // Fallback
-            const data = {
-                name: previewName,
-                sender: previewSenderName,
-                images: finalImages,
-                question: previewQuestion,
-                mood: mood,
-                spotifyUrl: spotifyUrl
+            // Fallback: Compact Data to keep URL short
+            const compact = {
+                n: previewName,
+                s: previewSenderName,
+                q: previewQuestion,
+                i: finalImages,
+                m: mood,
+                u: spotifyUrl
             };
-            const encoded = btoa(JSON.stringify(data));
-            const url = `${window.location.origin}${window.location.pathname}#/proposal?data=${encoded}`;
+            const encoded = btoa(JSON.stringify(compact));
+            const url = `${window.location.origin}${window.location.pathname}#/p/v?d=${encoded}`;
             setGeneratedUrl(url);
         }
     };

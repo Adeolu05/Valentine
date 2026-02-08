@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Heart, Volume2, Play } from 'lucide-react';
 import confetti from 'canvas-confetti';
@@ -20,6 +20,7 @@ const getSpotifyEmbedUrl = (url?: string) => {
 const ProposalView = () => {
     const navigate = useNavigate();
     const location = useLocation();
+    const { id: idParamFromRoute } = useParams();
     const [noPos, setNoPos] = useState({ x: 0, y: 0 });
     const [noCount, setNoCount] = useState(0);
     const [celebrated, setCelebrated] = useState(false);
@@ -27,8 +28,8 @@ const ProposalView = () => {
 
     // Parse customization from URL
     const queryParams = new URLSearchParams(location.search);
-    const dataParam = queryParams.get('data');
-    const idParam = queryParams.get('id');
+    const dataParam = queryParams.get('data') || queryParams.get('d');
+    const idParam = queryParams.get('id') || idParamFromRoute;
 
     const [customizedData, setCustomizedData] = useState<{ name: string; sender: string; image: string; question: string; mood: Mood; spotify_url?: string; images?: string[] }>({
         name: "Valentine",
@@ -88,16 +89,17 @@ const ProposalView = () => {
             } else if (dataParam) {
                 try {
                     const decoded = JSON.parse(atob(dataParam));
+                    // Support both expanded and compact keys
                     setCustomizedData({
-                        name: decoded.name || "Valentine",
-                        sender: decoded.sender || "Admirer",
-                        image: decoded.image || IMAGES.roses,
-                        question: decoded.question || "Will you be my Valentine?",
-                        mood: decoded.mood || 'classic',
-                        spotify_url: decoded.spotify_url || decoded.spotifyUrl || '',
-                        images: decoded.images || []
+                        name: decoded.n || decoded.name || "Valentine",
+                        sender: decoded.s || decoded.sender || "Admirer",
+                        image: decoded.i ? decoded.i[decoded.i.length - 1] : (decoded.image || IMAGES.roses),
+                        question: decoded.q || decoded.question || "Will you be my Valentine?",
+                        mood: decoded.m || decoded.mood || 'classic',
+                        spotify_url: decoded.u || decoded.spotify_url || decoded.spotifyUrl || '',
+                        images: decoded.i || decoded.images || []
                     });
-                    if (decoded.images && decoded.images.length > 1) setShowSlideshow(true);
+                    if ((decoded.i || decoded.images) && (decoded.i || decoded.images).length > 1) setShowSlideshow(true);
                 } catch (e) {
                     console.error("Failed to decode data", e);
                 }
@@ -300,7 +302,10 @@ const ProposalView = () => {
 
                                 <div className="flex flex-col gap-4">
                                     <button
-                                        onClick={() => navigate(`/success${location.search}`)}
+                                        onClick={() => {
+                                            const target = idParamFromRoute ? `/s/${idParamFromRoute}${location.search}` : `/success${location.search}`;
+                                            navigate(target);
+                                        }}
                                         className="w-full py-5 bg-brand-500 text-white rounded-3xl font-bold text-xl shadow-xl shadow-brand-500/40 hover:scale-105 active:scale-95 transition-all"
                                     >
                                         View Our Promise
