@@ -82,7 +82,7 @@ const SuccessView = () => {
 
     useEffect(() => {
         const fetchData = async () => {
-            if (idParam) {
+            if (idParam && idParam !== 'v') {
                 // Fetch from database
                 const { data, error } = await supabase
                     .from('proposals')

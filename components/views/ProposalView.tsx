@@ -66,7 +66,7 @@ const ProposalView = () => {
     useEffect(() => {
         const fetchData = async () => {
             setLoadingConfig(true);
-            if (idParam) {
+            if (idParam && idParam !== 'v') {
                 const { data, error } = await supabase
                     .from('proposals')
                     .select('*')

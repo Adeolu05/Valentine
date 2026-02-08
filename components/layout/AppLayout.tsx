@@ -20,7 +20,7 @@ const AppLayout = () => {
                 <HeartTrailCursor />
                 <Navigation theme={theme} toggleTheme={toggleTheme} />
 
-                <main className="mx-auto max-w-[1600px] overflow-hidden">
+                <main className="mx-auto max-w-[1600px]">
                     <Outlet />
                 </main>
 
