@@ -138,9 +138,12 @@ const CreateCardView = () => {
 
         // Save to database
         try {
-            const { data, error } = await supabase
+            const shortId = generateShortId();
+            // Try inserting with custom short ID first
+            let { data, error } = await supabase
                 .from('proposals')
                 .insert({
+                    id: shortId,
                     name: previewName,
                     sender_name: previewSenderName,
                     question: previewQuestion,
@@ -151,7 +154,24 @@ const CreateCardView = () => {
                 .select()
                 .single();
 
-            if (error) throw error;
+            // If it fails (likely because 'id' must be UUID), try without providing ID
+            if (error) {
+                const retry = await supabase
+                    .from('proposals')
+                    .insert({
+                        name: previewName,
+                        sender_name: previewSenderName,
+                        question: previewQuestion,
+                        images: finalImages,
+                        mood: mood,
+                        spotify_url: spotifyUrl
+                    })
+                    .select()
+                    .single();
+
+                if (retry.error) throw retry.error;
+                data = retry.data;
+            }
 
             if (data) {
                 const url = `${window.location.origin}${window.location.pathname}#/p/${data.id}`;
