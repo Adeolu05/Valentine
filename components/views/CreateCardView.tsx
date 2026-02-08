@@ -5,8 +5,14 @@ import PageWrapper from '../layout/PageWrapper';
 import { supabase } from '../../utils/supabase';
 import { IMAGES, MOODS } from '../../constants';
 import { Mood } from '../../types';
+import { useMeta } from '../../hooks/useMeta';
 
 const CreateCardView = () => {
+    useMeta({
+        title: "Creator Studio",
+        description: "Design your perfect Valentine's proposal card with custom moods, music, and AI-generated vows."
+    });
+
     const [name, setName] = useState('');
     const [senderName, setSenderName] = useState('');
     const [question, setQuestion] = useState('');

@@ -7,6 +7,7 @@ import { generateLoveLetter } from '../../services/geminiService';
 import { supabase } from '../../utils/supabase';
 import { IMAGES, MOODS } from '../../constants';
 import { Mood } from '../../types';
+import { useMeta } from '../../hooks/useMeta';
 
 const getSpotifyEmbedUrl = (url?: string) => {
     if (!url) return null;
@@ -57,6 +58,12 @@ const SuccessView = () => {
         mood: 'classic'
     });
     const location = useLocation();
+
+    useMeta({
+        title: "Our Forever Promise",
+        description: `A digital keepsake of the promise made between ${customizedData.sender} and ${customizedData.name}.`,
+        image: customizedData.image
+    });
 
     // Apply Mood class to body
     useEffect(() => {

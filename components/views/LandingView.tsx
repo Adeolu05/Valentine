@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Sparkles, ArrowRight, ChevronLeft, ChevronRight, Heart, Music, Image as ImageIcon, Zap, Lock, Smartphone } from 'lucide-react';
 import PageWrapper from '../layout/PageWrapper';
 import { IMAGES, MILESTONES } from '../../constants';
+import { useMeta } from '../../hooks/useMeta';
 
 const CountdownTimer = () => {
     const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
@@ -465,6 +466,11 @@ export const GallerySection = () => {
 };
 
 const LandingView = () => {
+    useMeta({
+        title: "Create Your Love Story",
+        description: "Craft personalized proposals & digital keepsakes. Use AI-generated vows and prismatic aesthetics to express your love."
+    });
+
     return (
         <>
             <HeroSection />

@@ -8,6 +8,7 @@ import { useAudio } from '../../hooks/useAudio';
 import { supabase } from '../../utils/supabase';
 import { IMAGES, MOODS } from '../../constants';
 import { Mood } from '../../types';
+import { useMeta } from '../../hooks/useMeta';
 
 const getSpotifyEmbedUrl = (url?: string) => {
     if (!url) return null;
@@ -37,6 +38,12 @@ const ProposalView = () => {
         mood: 'classic'
     });
     const [loadingConfig, setLoadingConfig] = useState(false);
+
+    useMeta({
+        title: customizedData.name ? `For ${customizedData.name}` : "A Special Message",
+        description: `${customizedData.sender} has a special question for you. Open to reveal the magic.`,
+        image: customizedData.image
+    });
 
     // Apply Mood class to body
     useEffect(() => {
