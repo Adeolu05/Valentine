@@ -1,6 +1,7 @@
 import React from 'react';
 import { HashRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
+import { Analytics } from '@vercel/analytics/react';
 import AppLayout from './components/layout/AppLayout';
 import LandingView, { HeroSection, StorySection, GallerySection } from './components/views/LandingView';
 import CreateCardView from './components/views/CreateCardView';
@@ -29,8 +30,6 @@ const AnimatedRoutes = () => {
     </AnimatePresence>
   );
 };
-
-import { Analytics } from "@vercel/analytics/react";
 
 const App = () => (
   <>
