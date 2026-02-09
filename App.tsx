@@ -19,8 +19,10 @@ const AnimatedRoutes = () => {
           <Route path="/story" element={<StorySection />} />
           <Route path="/gallery" element={<GallerySection />} />
           <Route path="/proposal" element={<ProposalView />} />
+          <Route path="/p/:id" element={<ProposalView />} />
           <Route path="/create" element={<CreateCardView />} />
           <Route path="/success" element={<SuccessView />} />
+          <Route path="/s/:id" element={<SuccessView />} />
           <Route path="/map" element={<div className="pt-40 text-center text-4xl font-display">Map Interface Loading...</div>} />
           <Route path="/guestbook" element={<div className="pt-40 text-center text-4xl font-display">Guestbook indexing...</div>} />
         </Route>

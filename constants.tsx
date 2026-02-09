@@ -1,5 +1,38 @@
 
-import { Milestone, GuestMessage } from './types';
+import { Milestone, GuestMessage, Mood } from './types';
+
+export const MOODS: Record<Mood, { name: string; colors: string; text: string; accent: string }> = {
+  classic: {
+    name: "Classic Romance",
+    colors: "from-brand-50 to-pink-50 dark:from-brand-900/20 dark:to-pink-900/20",
+    text: "text-brand-500",
+    accent: "bg-brand-500"
+  },
+  midnight: {
+    name: "Midnight Starlight",
+    colors: "from-blue-900/40 to-slate-900/60 dark:from-blue-950 dark:to-black",
+    text: "text-blue-400",
+    accent: "bg-blue-500"
+  },
+  neon: {
+    name: "Neon Passion",
+    colors: "from-fuchsia-500/20 to-cyan-500/20 dark:from-fuchsia-900/40 dark:to-cyan-900/40",
+    text: "text-fuchsia-500",
+    accent: "bg-fuchsia-500"
+  },
+  vintage: {
+    name: "Vintage Soul",
+    colors: "from-orange-50 to-stone-200 dark:from-orange-900/20 dark:to-stone-900/40",
+    text: "text-orange-700 dark:text-orange-500",
+    accent: "bg-orange-600"
+  },
+  ethereal: {
+    name: "Ethereal Dream",
+    colors: "from-indigo-100 to-purple-100 dark:from-indigo-900/30 dark:to-purple-900/30",
+    text: "text-purple-500",
+    accent: "bg-purple-500"
+  }
+};
 
 export const IMAGES = {
   envelope: "https://lh3.googleusercontent.com/aida-public/AB6AXuCwcIedN9hwoJyf4IanmPFL_hZHQlTutfV7s1RcYoHqaiW9agSCUAjpWtIB3sbUduuYLXoOT6r3xYNO8HW12m1_0FoK_pQQP9cbp2799igRnZBQz-8Dijsi8NmtNYGA4rLGZWhhOnjalIyvnARz_XE72cLofQt_RbCKK0HkewGCTmioftO8BfmMnluqBrgRN9em560R96_Q6L8GTjmMXXPOIVU9PGeFfRuHjdwvbxOof6RFgJmixZnV06ZsHVXodlPzoV-6BkRCM9s",

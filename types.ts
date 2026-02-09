@@ -1,5 +1,6 @@
 
 export type Theme = 'light' | 'dark';
+export type Mood = 'classic' | 'midnight' | 'neon' | 'vintage' | 'ethereal';
 
 export interface Milestone {
   id: string;

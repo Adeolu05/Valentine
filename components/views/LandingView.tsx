@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Sparkles, ArrowRight, ChevronLeft, ChevronRight, Heart, Music, Image as ImageIcon, Zap, Lock, Smartphone } from 'lucide-react';
 import PageWrapper from '../layout/PageWrapper';
 import { IMAGES, MILESTONES } from '../../constants';
+import { useMeta } from '../../hooks/useMeta';
 
 const CountdownTimer = () => {
     const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
@@ -206,7 +207,7 @@ export const HeroSection = () => {
                                 animate={{ opacity: 1, x: 0 }}
                                 whileHover={{ scale: 1.05, x: -10 }}
                                 transition={{ delay: 1 + i * 0.2 }}
-                                className="glass-pill p-6 rounded-3xl border-white/10 backdrop-blur-2xl shadow-2xl cursor-pointer"
+                                className="glass-2 prismatic-glow p-6 rounded-3xl border-white/10 backdrop-blur-2xl shadow-2xl cursor-pointer"
                             >
                                 <p className="text-xs font-bold text-brand-300 uppercase tracking-widest mb-1">{stat.label}</p>
                                 <p className="text-3xl font-medium text-white tracking-tighter">{stat.val}</p>
@@ -294,7 +295,7 @@ export const FeaturesSection = () => {
                                 viewport={{ once: true }}
                                 transition={{ delay: i * 0.1 }}
                                 whileHover={{ y: -10 }}
-                                className="group relative p-8 bg-white dark:bg-stone-900 rounded-[2rem] border border-stone-200 dark:border-white/5 shadow-xl hover:shadow-2xl transition-all duration-300"
+                                className="group relative p-8 bg-white dark:bg-stone-900 rounded-[2rem] border border-stone-200 dark:border-white/5 shadow-xl hover:shadow-2xl transition-all duration-300 card-elevation"
                             >
                                 <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-0 group-hover:opacity-5 rounded-[2rem] transition-opacity`} />
 
@@ -372,7 +373,7 @@ export const StorySection = () => {
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                         <motion.div
-                            className="absolute bottom-8 left-8 right-8 p-10 glass-pill rounded-[3rem] border-white/20"
+                            className="absolute bottom-8 left-8 right-8 p-10 glass-2 prismatic-glow rounded-[3rem] border-white/20"
                             whileHover={{ scale: 1.02 }}
                         >
                             <p className="text-white text-2xl font-light italic leading-relaxed">"Every lover deserves an invitation that feels as unique and unrepeatable as the love it carries."</p>
@@ -441,7 +442,7 @@ export const GallerySection = () => {
                             viewport={{ once: true }}
                             transition={{ delay: i * 0.1 }}
                             whileHover={{ y: -10, scale: 1.02 }}
-                            className={`group relative h-[500px] sm:h-[650px] rounded-[2.5rem] sm:rounded-[4rem] overflow-hidden shadow-2xl transition-all duration-700 cursor-pointer ${active === i ? 'block ring-4 sm:ring-8 ring-brand-500/30 scale-100 sm:scale-105' : 'hidden md:block scale-95 opacity-50'}`}
+                            className={`group relative h-[500px] sm:h-[650px] rounded-[2.5rem] sm:rounded-[4rem] overflow-hidden shadow-2xl transition-all duration-700 cursor-pointer card-elevation ${active === i ? 'block ring-4 sm:ring-8 ring-brand-500/30 scale-100 sm:scale-105' : 'hidden md:block scale-95 opacity-50'}`}
                             onClick={() => setActive(i)}
                         >
                             <img src={item.img} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 grayscale-[40%] group-hover:grayscale-0" alt={item.title} />
@@ -465,6 +466,11 @@ export const GallerySection = () => {
 };
 
 const LandingView = () => {
+    useMeta({
+        title: "Create Your Love Story",
+        description: "Craft personalized proposals & digital keepsakes. Use AI-generated vows and prismatic aesthetics to express your love."
+    });
+
     return (
         <>
             <HeroSection />

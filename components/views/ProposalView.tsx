@@ -1,16 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Heart, Volume2, Play } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import PageWrapper from '../layout/PageWrapper';
 import { useAudio } from '../../hooks/useAudio';
 import { supabase } from '../../utils/supabase';
-import { IMAGES } from '../../constants';
+import { IMAGES, MOODS } from '../../constants';
+import { Mood } from '../../types';
+import { useMeta } from '../../hooks/useMeta';
+
+const getSpotifyEmbedUrl = (url?: string) => {
+    if (!url) return null;
+    const match = url.match(/track\/([a-zA-Z0-9]+)/);
+    if (!match) return null;
+    return `https://open.spotify.com/embed/track/${match[1]}?utm_source=generator&theme=0`;
+};
 
 const ProposalView = () => {
     const navigate = useNavigate();
     const location = useLocation();
+    const { id: idParamFromRoute } = useParams();
     const [noPos, setNoPos] = useState({ x: 0, y: 0 });
     const [noCount, setNoCount] = useState(0);
     const [celebrated, setCelebrated] = useState(false);
@@ -18,16 +28,32 @@ const ProposalView = () => {
 
     // Parse customization from URL
     const queryParams = new URLSearchParams(location.search);
-    const dataParam = queryParams.get('data');
-    const idParam = queryParams.get('id');
+    const dataParam = queryParams.get('data') || queryParams.get('d');
+    const idParam = queryParams.get('id') || idParamFromRoute;
 
-    const [customizedData, setCustomizedData] = useState<{ name: string; sender: string; image: string; question: string; images?: string[] }>({
+    const [customizedData, setCustomizedData] = useState<{ name: string; sender: string; image: string; question: string; mood: Mood; spotify_url?: string; images?: string[] }>({
         name: "Valentine",
         sender: "Admirer",
         image: IMAGES.roses,
-        question: "Will you be my Valentine?"
+        question: "Will you be my Valentine?",
+        mood: 'classic'
     });
     const [loadingConfig, setLoadingConfig] = useState(false);
+
+    useMeta({
+        title: customizedData.name ? `For ${customizedData.name}` : "A Special Message",
+        description: `${customizedData.sender} has a special question for you. Open to reveal the magic.`,
+        image: customizedData.image
+    });
+
+    // Apply Mood class to body
+    useEffect(() => {
+        const moodClass = `mood-${customizedData.mood || 'classic'}`;
+        document.body.classList.add(moodClass);
+        return () => document.body.classList.remove(moodClass);
+    }, [customizedData.mood]);
+
+    const currentMood = MOODS[customizedData.mood || 'classic'];
 
     // Slideshow Logic
     const [showSlideshow, setShowSlideshow] = useState(customizedData.images && customizedData.images.length > 1);
@@ -40,7 +66,7 @@ const ProposalView = () => {
     useEffect(() => {
         const fetchData = async () => {
             setLoadingConfig(true);
-            if (idParam) {
+            if (idParam && idParam !== 'v') {
                 const { data, error } = await supabase
                     .from('proposals')
                     .select('*')
@@ -52,17 +78,37 @@ const ProposalView = () => {
                     setCustomizedData({
                         name: data.name,
                         sender: data.sender_name || "Admirer",
-                        question: data.question,
+                        question: data.question || "Will you be my Valentine?",
                         image: data.images && data.images.length > 0 ? data.images[data.images.length - 1] : IMAGES.roses,
-                        images: data.images
+                        mood: (data.mood as Mood) || 'classic',
+                        spotify_url: data.spotify_url || '',
+                        images: data.images || []
                     });
                     if (hasImages) setShowSlideshow(true);
                 }
             } else if (dataParam) {
                 try {
                     const decoded = JSON.parse(atob(dataParam));
-                    setCustomizedData({ ...customizedData, ...decoded, sender: decoded.sender || "Admirer" });
-                    if (decoded.images && decoded.images.length > 1) setShowSlideshow(true);
+                    const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/uploads/`;
+
+                    const processImages = (imgs: string[]) =>
+                        imgs.map(img => img.startsWith('http') ? img : `${baseUrl}${img}`);
+
+                    const rawImages = decoded.i || decoded.images || [];
+                    const finalImages = processImages(Array.isArray(rawImages) ? rawImages : [rawImages]);
+                    const spotifyId = decoded.u || decoded.spotify_url || decoded.spotifyUrl || '';
+                    const finalSpotify = spotifyId && !spotifyId.startsWith('http') ? `https://open.spotify.com/track/${spotifyId}` : spotifyId;
+
+                    setCustomizedData({
+                        name: decoded.n || decoded.name || "Valentine",
+                        sender: decoded.s || decoded.sender || "Admirer",
+                        image: finalImages.length > 0 ? finalImages[finalImages.length - 1] : (decoded.image || IMAGES.roses),
+                        question: decoded.q || decoded.question || "Will you be my Valentine?",
+                        mood: decoded.m || decoded.mood || 'classic',
+                        spotify_url: finalSpotify,
+                        images: finalImages
+                    });
+                    if (finalImages.length > 1) setShowSlideshow(true);
                 } catch (e) {
                     console.error("Failed to decode data", e);
                 }
@@ -221,7 +267,7 @@ const ProposalView = () => {
                             onClick={() => setIsOpen(true)}
                             whileHover={{ scale: 1.05, rotateY: 5 }}
                         >
-                            <div className="relative w-72 sm:w-80 h-48 sm:h-52 bg-gradient-to-br from-brand-50 to-pink-50 dark:from-brand-900/20 dark:to-pink-900/20 rounded-2xl shadow-2xl overflow-hidden border-2 border-brand-100 dark:border-brand-800 flex items-center justify-center">
+                            <div className="relative w-72 sm:w-80 h-48 sm:h-52 glass-2 prismatic-glow rounded-2xl shadow-2xl overflow-hidden border-2 border-brand-100 dark:border-brand-800 flex items-center justify-center">
                                 <div className="absolute top-0 inset-x-0 h-1/2 bg-brand-100/50 dark:bg-brand-800/30 clip-path-v" />
                                 <motion.div
                                     animate={{ scale: [1, 1.1, 1] }}
@@ -265,7 +311,10 @@ const ProposalView = () => {
 
                                 <div className="flex flex-col gap-4">
                                     <button
-                                        onClick={() => navigate(`/success${location.search}`)}
+                                        onClick={() => {
+                                            const target = idParamFromRoute ? `/s/${idParamFromRoute}${location.search}` : `/success${location.search}`;
+                                            navigate(target);
+                                        }}
                                         className="w-full py-5 bg-brand-500 text-white rounded-3xl font-bold text-xl shadow-xl shadow-brand-500/40 hover:scale-105 active:scale-95 transition-all"
                                     >
                                         View Our Promise
@@ -283,7 +332,7 @@ const ProposalView = () => {
                         y: isOpen ? 0 : 50
                     }}
                     transition={{ type: "spring", stiffness: 100, damping: 15 }}
-                    className={`w-full max-w-4xl bg-white/90 dark:bg-stone-900/90 backdrop-blur-3xl rounded-[3.5rem] p-8 lg:p-20 shadow-5xl card-glow text-center space-y-10 relative overflow-hidden border border-brand-100 dark:border-white/5 ${isOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}
+                    className={`w-full max-w-4xl glass-2 prismatic-glow rounded-[3.5rem] p-8 lg:p-20 shadow-5xl card-glow text-center space-y-10 relative overflow-hidden border border-brand-100 dark:border-white/5 ${isOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}
                 >
                     <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-brand-300 via-brand-500 to-brand-300" />
 
@@ -314,18 +363,32 @@ const ProposalView = () => {
                     <div className="space-y-4">
                         <h1 className="text-4xl sm:text-6xl font-medium tracking-tighter leading-tight font-display dark:text-white">
                             Hey {customizedData.name}, <br />
-                            <span className="italic font-serif text-brand-500 text-glow">{customizedData.question}</span>
+                            <span className={`italic font-serif ${currentMood.text} text-glow`}>{customizedData.question}</span>
                         </h1>
 
                         <p className="text-lg sm:text-xl font-light text-stone-500 dark:text-stone-400 max-w-lg mx-auto italic">
                             "In a world of constant change, you are my only certainty. Choose me, today and always?"
                         </p>
+
+                        {getSpotifyEmbedUrl(customizedData.spotify_url) && (
+                            <div className="max-w-xs mx-auto pt-4">
+                                <iframe
+                                    src={getSpotifyEmbedUrl(customizedData.spotify_url)!}
+                                    width="100%"
+                                    height="80"
+                                    frameBorder="0"
+                                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                                    loading="lazy"
+                                    className="rounded-2xl shadow-lg"
+                                ></iframe>
+                            </div>
+                        )}
                     </div>
 
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-8 pt-4">
                         <button
                             onClick={handleYes}
-                            className="w-full sm:w-auto px-16 py-6 bg-brand-500 text-white rounded-full text-2xl font-black shadow-2xl shadow-brand-500/40 hover:scale-110 active:scale-95 transition-all z-10"
+                            className={`w-full sm:w-auto px-16 py-6 ${currentMood.accent} text-white rounded-full text-2xl font-black shadow-2xl shadow-brand-500/40 hover:scale-110 active:scale-95 transition-all z-10`}
                         >
                             YES!
                         </button>

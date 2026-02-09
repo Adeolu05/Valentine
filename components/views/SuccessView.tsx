@@ -1,11 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Heart, Star, Download, Sparkles, Award } from 'lucide-react';
 import PageWrapper from '../layout/PageWrapper';
 import { generateLoveLetter } from '../../services/geminiService';
 import { supabase } from '../../utils/supabase';
-import { IMAGES } from '../../constants';
+import { IMAGES, MOODS } from '../../constants';
+import { Mood } from '../../types';
+import { useMeta } from '../../hooks/useMeta';
+
+const getSpotifyEmbedUrl = (url?: string) => {
+    if (!url) return null;
+    const match = url.match(/track\/([a-zA-Z0-9]+)/);
+    if (!match) return null;
+    return `https://open.spotify.com/embed/track/${match[1]}?utm_source=generator&theme=0`;
+};
 
 const FloatingParticles = () => {
     return (
@@ -42,17 +51,38 @@ const FloatingParticles = () => {
 const SuccessView = () => {
     const [letter, setLetter] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
-    const [customizedData, setCustomizedData] = useState({ name: "Valentine", sender: "Admirer", image: IMAGES.roses });
+    const { id: idParamFromRoute } = useParams();
+    const [customizedData, setCustomizedData] = useState<{ name: string; sender: string; image: string; mood: Mood; spotify_url?: string }>({
+        name: "Valentine",
+        sender: "Admirer",
+        image: IMAGES.roses,
+        mood: 'classic'
+    });
     const location = useLocation();
+
+    useMeta({
+        title: "Our Forever Promise",
+        description: `A digital keepsake of the promise made between ${customizedData.sender} and ${customizedData.name}.`,
+        image: customizedData.image
+    });
+
+    // Apply Mood class to body
+    useEffect(() => {
+        const moodClass = `mood-${customizedData.mood || 'classic'}`;
+        document.body.classList.add(moodClass);
+        return () => document.body.classList.remove(moodClass);
+    }, [customizedData.mood]);
+
+    const currentMood = MOODS[customizedData.mood || 'classic'];
 
     // Parse customization
     const queryParams = new URLSearchParams(location.search);
-    const dataParam = queryParams.get('data');
-    const idParam = queryParams.get('id');
+    const dataParam = queryParams.get('data') || queryParams.get('d');
+    const idParam = queryParams.get('id') || idParamFromRoute;
 
     useEffect(() => {
         const fetchData = async () => {
-            if (idParam) {
+            if (idParam && idParam !== 'v') {
                 // Fetch from database
                 const { data, error } = await supabase
                     .from('proposals')
@@ -64,17 +94,32 @@ const SuccessView = () => {
                     setCustomizedData({
                         name: data.name,
                         sender: data.sender_name || "Admirer",
-                        image: data.images && data.images.length > 0 ? data.images[data.images.length - 1] : IMAGES.roses
+                        image: data.images && data.images.length > 0 ? data.images[data.images.length - 1] : IMAGES.roses,
+                        mood: (data.mood as Mood) || 'classic',
+                        spotify_url: data.spotify_url || ''
                     });
                 }
             } else if (dataParam) {
                 // Parse from URL parameter
                 try {
                     const decoded = JSON.parse(atob(dataParam));
+                    const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/uploads/`;
+
+                    const processImages = (imgs: string | string[]) => {
+                        const arr = Array.isArray(imgs) ? imgs : [imgs];
+                        return arr.map(img => img.startsWith('http') ? img : `${baseUrl}${img}`);
+                    };
+
+                    const finalImages = processImages(decoded.i || decoded.images || []);
+                    const spotifyId = decoded.u || decoded.spotify_url || decoded.spotifyUrl || '';
+                    const finalSpotify = spotifyId && !spotifyId.startsWith('http') ? `https://open.spotify.com/track/${spotifyId}` : spotifyId;
+
                     setCustomizedData({
-                        name: decoded.name || "Valentine",
-                        sender: decoded.sender || "Admirer",
-                        image: decoded.image || IMAGES.roses
+                        name: decoded.n || decoded.name || "Valentine",
+                        sender: decoded.s || decoded.sender || "Admirer",
+                        image: finalImages.length > 0 ? finalImages[finalImages.length - 1] : (decoded.image || IMAGES.roses),
+                        mood: decoded.m || decoded.mood || 'classic',
+                        spotify_url: finalSpotify
                     });
                 } catch (e) {
                     console.error("Failed to decode data", e);
@@ -149,7 +194,7 @@ const SuccessView = () => {
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.6 }}
-                    className="w-full max-w-5xl bg-white dark:bg-stone-900 rounded-[4rem] p-1 sm:p-2 shadow-6xl relative border-8 border-brand-50 dark:border-white/5 overflow-hidden"
+                    className="w-full max-w-5xl glass-2 prismatic-glow rounded-[4rem] p-1 sm:p-2 shadow-6xl relative border-8 border-brand-50 dark:border-white/5 overflow-hidden"
                     id="certificate"
                 >
                     <div className="absolute inset-0 bg-gradient-to-br from-brand-500/5 via-transparent to-gold-500/5 -z-10" />
@@ -169,6 +214,20 @@ const SuccessView = () => {
                         </motion.div>
 
                         <div className="text-center space-y-6">
+                            {getSpotifyEmbedUrl(customizedData.spotify_url) && (
+                                <div className="max-w-xs mx-auto mb-8" data-html2canvas-ignore="true">
+                                    <iframe
+                                        src={getSpotifyEmbedUrl(customizedData.spotify_url)!}
+                                        width="100%"
+                                        height="80"
+                                        frameBorder="0"
+                                        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                                        loading="lazy"
+                                        className="rounded-2xl shadow-lg border border-brand-100 dark:border-white/5"
+                                    ></iframe>
+                                </div>
+                            )}
+
                             <motion.div
                                 initial={{ opacity: 0, scale: 0.9 }}
                                 animate={{ opacity: 1, scale: 1 }}
@@ -192,7 +251,7 @@ const SuccessView = () => {
                             >
                                 The Promise with <br />
                                 <motion.span
-                                    className="italic font-serif text-brand-500 text-glow"
+                                    className={`italic font-serif ${currentMood.text} text-glow`}
                                     animate={{
                                         textShadow: [
                                             "0 0 20px rgba(244, 63, 94, 0.3)",
@@ -239,7 +298,7 @@ const SuccessView = () => {
                                         initial={{ opacity: 0, y: 20 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: 0.2 }}
-                                        className="p-10 sm:p-16 bg-gradient-to-br from-stone-50 to-pink-50/30 dark:from-black/40 dark:to-pink-900/10 rounded-[3rem] border border-brand-100/50 dark:border-white/5 shadow-inner text-left relative overflow-hidden"
+                                        className="p-10 sm:p-16 glass-2 prismatic-glow rounded-[3rem] border border-brand-100/50 dark:border-white/5 shadow-inner text-left relative overflow-hidden"
                                     >
                                         <motion.div
                                             className="absolute top-0 right-0 p-8 opacity-5"
@@ -249,11 +308,11 @@ const SuccessView = () => {
                                             <Heart className="size-40 fill-current text-brand-500" />
                                         </motion.div>
                                         <p className="text-xl sm:text-2xl font-serif italic text-stone-800 dark:text-stone-200 leading-relaxed relative z-10 antialiased">
-                                            <span className="block mb-4">My dearest, <span className="text-brand-500 font-bold">{customizedData.name}</span></span>
+                                            <span className="block mb-4">My dearest, <span className={`${currentMood.text} font-bold`}>{customizedData.name}</span></span>
                                             <span className="whitespace-pre-wrap">{letter}</span>
                                             <span className="block mt-8 text-right">
                                                 Yours eternally, <br />
-                                                <span className="text-brand-500 font-bold not-italic">{customizedData.sender}</span>
+                                                <span className={`${currentMood.text} font-bold not-italic`}>{customizedData.sender}</span>
                                             </span>
                                         </p>
                                     </motion.div>
@@ -279,7 +338,7 @@ const SuccessView = () => {
                                     whileHover={{ scale: 1.05 }}
                                     whileTap={{ scale: 0.95 }}
                                     onClick={handleSave}
-                                    className="flex items-center gap-3 bg-gradient-to-r from-brand-500 to-pink-500 text-white px-10 py-5 rounded-full font-bold transition-all shadow-xl shadow-brand-500/30"
+                                    className={`flex items-center gap-3 ${currentMood.accent} text-white px-10 py-5 rounded-full font-bold transition-all shadow-xl shadow-brand-500/30`}
                                 >
                                     Save Record <Download className="size-4" />
                                 </motion.button>

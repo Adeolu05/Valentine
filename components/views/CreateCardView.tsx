@@ -3,12 +3,31 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, Upload, ArrowRight, Check, Copy, Heart, Image as ImageIcon, Film } from 'lucide-react';
 import PageWrapper from '../layout/PageWrapper';
 import { supabase } from '../../utils/supabase';
-import { IMAGES } from '../../constants';
+import { IMAGES, MOODS } from '../../constants';
+import { Mood } from '../../types';
+import { useMeta } from '../../hooks/useMeta';
+import { compressImage } from '../../utils/imageProcessor';
+import { uploadWithProgress } from '../../utils/uploadHelper';
 
 const CreateCardView = () => {
+    useMeta({
+        title: "Creator Studio",
+        description: "Design your perfect Valentine's proposal card with custom moods, music, and AI-generated vows."
+    });
+
+    const generateShortId = () => {
+        const chars = 'abcdefghijklmnopqrstuvwxyz01234563789';
+        let result = '';
+        for (let i = 0; i < 6; i++) {
+            result += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return result;
+    };
     const [name, setName] = useState('');
     const [senderName, setSenderName] = useState('');
     const [question, setQuestion] = useState('');
+    const [mood, setMood] = useState<Mood>('classic');
+    const [spotifyUrl, setSpotifyUrl] = useState('');
 
     // Split state for better UX
     const [mainImage, setMainImage] = useState('');
@@ -19,7 +38,9 @@ const CreateCardView = () => {
 
     // Uploading states
     const [uploadingMain, setUploadingMain] = useState(false);
+    const [uploadProgressMain, setUploadProgressMain] = useState(0);
     const [uploadingMemory, setUploadingMemory] = useState<boolean[]>([false, false, false]);
+    const [uploadProgressMemory, setUploadProgressMemory] = useState<number[]>([0, 0, 0]);
 
     // Default values for preview
     const previewName = name || "Valentine";
@@ -32,21 +53,38 @@ const CreateCardView = () => {
             // Set loading state
             if (type === 'main') {
                 setUploadingMain(true);
+                setUploadProgressMain(0);
             } else {
                 const newUploading = [...uploadingMemory];
                 newUploading[index] = true;
                 setUploadingMemory(newUploading);
+                const newProgress = [...uploadProgressMemory];
+                newProgress[index] = 0;
+                setUploadProgressMemory(newProgress);
             }
+
+            // 1. Optimize Image
+            const compressedBlob = await compressImage(file);
 
             const fileExt = file.name.split('.').pop();
             const fileName = `${Math.random()}.${fileExt}`;
             const filePath = `${fileName}`;
 
-            const { error: uploadError } = await supabase.storage
-                .from('uploads')
-                .upload(filePath, file);
-
-            if (uploadError) throw uploadError;
+            // 2. Upload with Progress
+            await uploadWithProgress(
+                'uploads',
+                filePath,
+                compressedBlob,
+                (progress) => {
+                    if (type === 'main') {
+                        setUploadProgressMain(progress);
+                    } else {
+                        const newProgress = [...uploadProgressMemory];
+                        newProgress[index] = progress;
+                        setUploadProgressMemory(newProgress);
+                    }
+                }
+            );
 
             const { data } = supabase.storage.from('uploads').getPublicUrl(filePath);
 
@@ -64,10 +102,16 @@ const CreateCardView = () => {
         } finally {
             if (type === 'main') {
                 setUploadingMain(false);
+                setTimeout(() => setUploadProgressMain(0), 1000); // Reset after delay
             } else {
                 const newUploading = [...uploadingMemory];
                 newUploading[index] = false;
                 setUploadingMemory(newUploading);
+                setTimeout(() => {
+                    const resetProgress = [...uploadProgressMemory];
+                    resetProgress[index] = 0;
+                    setUploadProgressMemory(resetProgress);
+                }, 1000);
             }
         }
     };
@@ -94,34 +138,59 @@ const CreateCardView = () => {
 
         // Save to database
         try {
-            const { data, error } = await supabase
+            const shortId = generateShortId();
+            // Try inserting with custom short ID first
+            let { data, error } = await supabase
                 .from('proposals')
                 .insert({
+                    id: shortId,
                     name: previewName,
                     sender_name: previewSenderName,
                     question: previewQuestion,
-                    images: finalImages
+                    images: finalImages,
+                    mood: mood,
+                    spotify_url: spotifyUrl
                 })
                 .select()
                 .single();
 
-            if (error) throw error;
+            // If it fails (likely because 'id' must be UUID), try without providing ID
+            if (error) {
+                const retry = await supabase
+                    .from('proposals')
+                    .insert({
+                        name: previewName,
+                        sender_name: previewSenderName,
+                        question: previewQuestion,
+                        images: finalImages,
+                        mood: mood,
+                        spotify_url: spotifyUrl
+                    })
+                    .select()
+                    .single();
+
+                if (retry.error) throw retry.error;
+                data = retry.data;
+            }
 
             if (data) {
-                const url = `${window.location.origin}${window.location.pathname}#/proposal?id=${data.id}`;
+                const url = `${window.location.origin}${window.location.pathname}#/p/${data.id}`;
                 setGeneratedUrl(url);
             }
         } catch (error) {
             console.error("Error saving proposal:", error);
-            // Fallback
-            const data = {
-                name: previewName,
-                sender: previewSenderName,
-                images: finalImages,
-                question: previewQuestion
+            // Fallback: Compact Data to keep URL short
+            const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/uploads/`;
+            const compact = {
+                n: previewName,
+                s: previewSenderName,
+                q: previewQuestion,
+                i: finalImages.map(url => url.startsWith(baseUrl) ? url.replace(baseUrl, '') : url),
+                m: mood,
+                u: spotifyUrl.includes('track/') ? spotifyUrl.split('track/')[1].split('?')[0] : spotifyUrl
             };
-            const encoded = btoa(JSON.stringify(data));
-            const url = `${window.location.origin}${window.location.pathname}#/proposal?data=${encoded}`;
+            const encoded = btoa(JSON.stringify(compact));
+            const url = `${window.location.origin}${window.location.pathname}#/p/v?d=${encoded}`;
             setGeneratedUrl(url);
         }
     };
@@ -203,6 +272,15 @@ const CreateCardView = () => {
                                             )}
                                         </label>
                                     </div>
+                                    {uploadingMain && (
+                                        <div className="mx-6 h-1 bg-stone-100 dark:bg-white/5 rounded-full overflow-hidden">
+                                            <motion.div
+                                                className="h-full bg-brand-500"
+                                                initial={{ width: 0 }}
+                                                animate={{ width: `${uploadProgressMain}%` }}
+                                            />
+                                        </div>
+                                    )}
                                     <p className="text-[10px] text-stone-400 ml-6 text-opacity-70">This is the photo they will see on the card.</p>
                                 </div>
 
@@ -218,8 +296,45 @@ const CreateCardView = () => {
                                 </div>
                             </div>
 
+                            {/* Section: Select Atmosphere */}
+                            <div className="space-y-4">
+                                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-stone-400 ml-6">Select Atmosphere</label>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                                    {(Object.keys(MOODS) as Mood[]).map((m) => (
+                                        <button
+                                            key={m}
+                                            onClick={() => setMood(m)}
+                                            className={`px-4 py-3 rounded-2xl text-[10px] font-bold uppercase tracking-wider transition-all border ${mood === m
+                                                ? `${MOODS[m].accent} text-white border-transparent shadow-lg scale-105`
+                                                : "bg-white dark:bg-white/5 border-stone-200 dark:border-white/10 text-stone-500 dark:text-stone-400 hover:border-brand-300"
+                                                }`}
+                                        >
+                                            {MOODS[m].name.split(' ')[0]}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Section: Spotify Music */}
+                            <div className="p-8 rounded-[2.5rem] glass-2 prismatic-glow border border-stone-200 dark:border-white/5 space-y-6 card-elevation">
+                                <div className="space-y-1">
+                                    <div className="flex items-center gap-2 text-stone-900 dark:text-white font-bold uppercase tracking-widest text-xs">
+                                        <Heart className="size-4 text-green-500 fill-current" />
+                                        Spotify Music
+                                    </div>
+                                    <p className="text-[10px] text-stone-400 font-medium">Add a romantic track (Paste Spotify track link)</p>
+                                </div>
+                                <input
+                                    type="text"
+                                    value={spotifyUrl}
+                                    onChange={(e) => setSpotifyUrl(e.target.value)}
+                                    placeholder="https://open.spotify.com/track/..."
+                                    className="w-full px-6 py-4 bg-stone-50 dark:bg-black/30 border border-stone-200 dark:border-white/10 rounded-2xl outline-none focus:ring-4 ring-green-500/10 transition-all dark:text-white text-sm"
+                                />
+                            </div>
+
                             {/* Section 2: Optional Memory Lane */}
-                            <div className="p-8 rounded-[2.5rem] bg-stone-100/50 dark:bg-white/5 border border-stone-200 dark:border-white/5 space-y-6">
+                            <div className="p-8 rounded-[2.5rem] glass-2 prismatic-glow border border-stone-200 dark:border-white/5 space-y-6 card-elevation">
                                 <div className="space-y-1">
                                     <div className="flex items-center gap-2 text-stone-900 dark:text-white font-bold uppercase tracking-widest text-xs">
                                         <Film className="size-4 text-brand-500" />
@@ -232,33 +347,46 @@ const CreateCardView = () => {
 
                                 <div className="space-y-3">
                                     {memoryImages.map((img, idx) => (
-                                        <div key={idx} className="flex gap-2">
-                                            <input
-                                                type="text"
-                                                value={img}
-                                                onChange={(e) => {
-                                                    const newImages = [...memoryImages];
-                                                    newImages[idx] = e.target.value;
-                                                    setMemoryImages(newImages);
-                                                }}
-                                                placeholder={`Memory Photo ${idx + 1}...`}
-                                                className="flex-1 px-6 py-3 bg-white dark:bg-black/30 border border-stone-200 dark:border-white/10 rounded-[1.5rem] outline-none focus:ring-2 ring-brand-500/10 transition-all dark:text-white text-sm placeholder:text-stone-300"
-                                            />
-                                            <label className="flex items-center justify-center px-4 bg-white dark:bg-white/5 border border-stone-200 dark:border-white/10 rounded-[1.5rem] cursor-pointer hover:bg-stone-200 dark:hover:bg-white/10 transition-colors">
+                                        <React.Fragment key={idx}>
+                                            <div className="flex gap-2">
                                                 <input
-                                                    type="file"
-                                                    accept="image/*"
-                                                    className="hidden"
-                                                    onChange={(e) => e.target.files && handleFileUpload(e.target.files[0], 'memory', idx)}
-                                                    disabled={uploadingMemory[idx]}
+                                                    type="text"
+                                                    value={img}
+                                                    onChange={(e) => {
+                                                        const newImages = [...memoryImages];
+                                                        newImages[idx] = e.target.value;
+                                                        setMemoryImages(newImages);
+                                                    }}
+                                                    placeholder={`Memory Photo ${idx + 1}...`}
+                                                    className="flex-1 px-6 py-3 bg-white dark:bg-black/30 border border-stone-200 dark:border-white/10 rounded-[1.5rem] outline-none focus:ring-2 ring-brand-500/10 transition-all dark:text-white text-sm placeholder:text-stone-300"
                                                 />
-                                                {uploadingMemory[idx] ? (
-                                                    <div className="size-4 border-2 border-stone-400 border-t-transparent rounded-full animate-spin" />
-                                                ) : (
-                                                    <Upload className="size-4 text-stone-500 dark:text-stone-400" />
-                                                )}
-                                            </label>
-                                        </div>
+                                                <label className="flex items-center justify-center px-4 bg-white dark:bg-white/5 border border-stone-200 dark:border-white/10 rounded-[1.5rem] cursor-pointer hover:bg-stone-200 dark:hover:bg-white/10 transition-colors">
+                                                    <input
+                                                        type="file"
+                                                        accept="image/*"
+                                                        className="hidden"
+                                                        onChange={(e) => e.target.files && handleFileUpload(e.target.files[0], 'memory', idx)}
+                                                        disabled={uploadingMemory[idx]}
+                                                    />
+                                                    {uploadingMemory[idx] ? (
+                                                        <div className="size-4 border-2 border-stone-400 border-t-transparent rounded-full animate-spin" />
+                                                    ) : (
+                                                        <Upload className="size-4 text-stone-500 dark:text-stone-400" />
+                                                    )}
+                                                </label>
+                                            </div>
+                                            {
+                                                uploadingMemory[idx] && (
+                                                    <div className="h-1 bg-stone-100 dark:bg-white/5 rounded-full overflow-hidden">
+                                                        <motion.div
+                                                            className="h-full bg-brand-500"
+                                                            initial={{ width: 0 }}
+                                                            animate={{ width: `${uploadProgressMemory[idx]}%` }}
+                                                        />
+                                                    </div>
+                                                )
+                                            }
+                                        </React.Fragment>
                                     ))}
                                 </div>
                             </div>
@@ -306,8 +434,8 @@ const CreateCardView = () => {
                         </div>
 
                         {/* Preview Content (Scaled down Proposal View) */}
-                        <div className="scale-[0.85] w-full max-w-lg">
-                            <div className="w-full bg-white dark:bg-stone-900 rounded-[3rem] p-10 shadow-xl card-glow text-center space-y-8 relative overflow-hidden border border-brand-100 dark:border-white/5">
+                        <div className="scale-[0.85] w-full max-w-lg card-elevation">
+                            <div className="w-full glass-2 prismatic-glow rounded-[3rem] p-10 shadow-xl card-glow text-center space-y-8 relative overflow-hidden border border-brand-100 dark:border-white/5">
                                 <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-brand-300 via-brand-500 to-brand-300" />
 
                                 <div className="relative mx-auto size-48 mb-6">
@@ -322,12 +450,12 @@ const CreateCardView = () => {
                                 <div className="space-y-2">
                                     <h1 className="text-4xl font-medium tracking-tighter leading-tight font-display dark:text-white">
                                         Hey {previewName}, <br />
-                                        <span className="italic font-serif text-brand-500 text-glow">{previewQuestion}</span>
+                                        <span className={`italic font-serif ${MOODS[mood].text} text-glow`}>{previewQuestion}</span>
                                     </h1>
                                 </div>
 
                                 <div className="flex items-center justify-center gap-4 pt-4 opacity-50 pointer-events-none">
-                                    <button className="px-8 py-4 bg-brand-500 text-white rounded-full text-lg font-black shadow-lg">YES!</button>
+                                    <button className={`px-8 py-4 ${MOODS[mood].accent} text-white rounded-full text-lg font-black shadow-lg`}>YES!</button>
                                     <button className="px-6 py-4 bg-stone-100 text-stone-400 rounded-full font-bold">No</button>
                                 </div>
                             </div>
@@ -335,7 +463,7 @@ const CreateCardView = () => {
                     </div>
                 </div>
             </div>
-        </PageWrapper>
+        </PageWrapper >
     );
 };
 
